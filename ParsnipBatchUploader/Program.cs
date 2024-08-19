@@ -24,16 +24,25 @@ namespace ParsnipBatchUploader
 
             if (destinationDir.Substring(0, destinationDir.Length - 1) != "\\") destinationDir += '\\';
 
-            
 
-            
+
+
 
             var files = Directory.GetFiles(sourceDir);
             var total = files.Count();
             var current = 0;
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 current++;
+                //Prevent crash if file is empty
+                if (new System.IO.FileInfo(file).Length == 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"\rWARNING - \"{file.Split('\\').Last()}\" ({current}/{total}) is blank and will be skipped");
+                    Console.ResetColor();
+                    continue;
+                }
+
                 Console.Write($"\r{current}/{total} - (Processing media...)                                                  ");
                 var now = Parsnip.AdjustedTime;
                 var originalExtension = $".{file.Split('.').Last()}";
@@ -74,14 +83,14 @@ namespace ParsnipBatchUploader
 
                     Media.ProcessMediaThumbnail(image, image.Id.ToString(), originalExtension, destinationDir);
 
-                    Console.Write($"\r{current}/{total} - (Uploading image - WARNING, YOU HAVE COMMENTED UPLOAD OF ORIGINAL...)                                                  ");
+                    Console.Write($"\r{current}/{total} - (Uploading image - WARNING, YOU HAVE COMMENTED UPLOAD OF ORIGINAL...)    ");
                     image.Upload(destinationDir, originalExtension);
                     Console.Write($"\r{current}/{total} - (Inserting metadata...)                                                  ");
                     image.Insert();
 
                     return image;
                 }
-                
+
                 Media processVideo()
                 {
                     var video = new Video()
@@ -92,7 +101,9 @@ namespace ParsnipBatchUploader
                         CreatedById = 1,
                     };
 
+                    Console.Write($"\r{current}/{total} - (Uploading video...)                                                  ");
                     video.Upload(destinationDir, originalExtension);
+                    Console.Write($"\r{current}/{total} - (Inserting metadata...)                                                  ");
                     video.VideoData.OriginalFileDir = $"{video.VideoUploadsDir}Originals/{mediaId}{originalExtension}";
                     video.Insert();
 
@@ -120,11 +131,11 @@ namespace ParsnipBatchUploader
         private static readonly NetworkCredential FtpCredentials = new NetworkCredential(ConfigurationManager.AppSettings["FtpUsername"], ConfigurationManager.AppSettings["FtpPassword"]);
         public static void Upload(this ParsnipData.Media.Image image, string LocalThumbnailsDir, string originalExt)
         {
-                //FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Originals", originalExt);
-                FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Compressed", ".jpg");
-                FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Placeholders", ".jpg");
+            //FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Originals", originalExt);
+            FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Compressed", ".jpg");
+            FtpUpload(image, LocalThumbnailsDir, RemoteImagesDir, "Placeholders", ".jpg");
 
-            
+
         }
 
         public static void Upload(this Video video, string localVideosDir, string originalExt) =>
