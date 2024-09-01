@@ -33,6 +33,9 @@ namespace ParsnipBatchUploader
             var current = 0;
             foreach (var file in files)
             {
+                Console.WriteLine();
+                Console.WriteLine(file.Split('\\').Last());
+
                 current++;
                 //Prevent crash if file is empty
                 if (new System.IO.FileInfo(file).Length == 0)
@@ -110,6 +113,8 @@ namespace ParsnipBatchUploader
                     return video;
                 }
             }
+
+            Console.ReadLine();
 
             string getResponse(string prompt)
             {
